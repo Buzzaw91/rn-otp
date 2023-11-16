@@ -9,4 +9,4 @@ typings/
 node_modules/
 
 # Service account key
-service-account-key.json
+service_account.json
