@@ -17,3 +17,9 @@ export const helloWorld = onRequest((request, response) => {
   logger.info("Hello logs!", {structuredData: true});
   response.send("Hello from Firebase!");
 });
+
+// write a similar funtion, that sends the message goodbye from firebase
+export const goodbyeWorld = onRequest((request, response) => {
+  logger.info("Goodbye logs!", {structuredData: true});
+  response.send("Goodbye from Firebase!");
+});
