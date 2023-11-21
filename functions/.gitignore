@@ -10,3 +10,7 @@ node_modules/
 
 # Service account key
 service_account.json
+
+# Environment variables
+.env
+```
