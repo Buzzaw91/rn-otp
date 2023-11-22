@@ -1,6 +1,8 @@
 import { onRequest } from "firebase-functions/v2/https";
 import * as admin from 'firebase-admin';
-import twilio from './twilio'
+import { twilioClient } from './twilio'
+
+const twilio =  twilioClient;
 
 export const requestOtp = onRequest(async (request, response): Promise<void> => {
  if (!request.body.phone) {
