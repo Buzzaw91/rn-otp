@@ -17,7 +17,7 @@
   "dependencies": {
     "dotenv": "^16.3.1",
     "firebase-admin": "^11.8.0",
-    "firebase-functions": "^4.5.0",
+    "firebase-functions": "4.5.0",
     "firestore-storage": "6.2.2",
     "twilio": "^4.19.0"
   },
