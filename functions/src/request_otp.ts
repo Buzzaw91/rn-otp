@@ -1,6 +1,17 @@
-import { onRequest } from "firebase-functions/v2/https";
+import twilio from 'twilio';
 import * as admin from 'firebase-admin';
-import { twilioClient } from './twilio';
+import * as functions from 'firebase-functions';
+import { onRequest } from "firebase-functions/v2/https";
+
+// Directly get Twilio credentials from Firebase functions configuration
+const config = functions.config();
+const { account_sid: accountSid, auth_token: authToken } = config.twilio;
+if (!accountSid || !authToken) {
+  throw new Error('Twilio credentials are not properly set.');
+}
+
+
+ const twilioClient = new twilio.Twilio(accountSid, authToken);
 
 // Extracted as a utility function
 function generateOtp() {
@@ -30,7 +41,7 @@ export const requestOtp = onRequest(async (request, response) => {
       return;
     }
 
-    const userRecord = await admin.auth().getUser(phone);
+    // const userRecord = await admin.auth().getUser(phone);
     const code = generateOtp();
 
     await sendOtpSms(phone, code);
