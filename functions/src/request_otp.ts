@@ -1,38 +1,44 @@
 import { onRequest } from "firebase-functions/v2/https";
 import * as admin from 'firebase-admin';
-import { twilioClient } from './twilio'
+import { twilioClient } from './twilio';
 
-const twilio =  twilioClient;
+// Extracted as a utility function
+function generateOtp() {
+  return Math.floor(Math.random() * 8999 + 1000);
+}
 
-export const requestOtp = onRequest(async (request, response): Promise<void> => {
- if (!request.body.phone) {
-   response.status(422).send({ error: 'You must provide a phone number' });
-   return;
- }
- const phone = String(request.body.phone).replace(/[^\d]/g, "");
+async function sendOtpSms(phone: string, code: number) {
+  const fromNumber = '+358454909714';
+  // or from a config file
+  await twilioClient.messages.create({
+    body: `Your code is ${code}`,
+    to: phone,
+    from: fromNumber
+  });
+}
 
- admin.auth().getUser(phone)
-  .then(userRecord => {
-    const code = Math.floor(Math.floor(Math.random() * 8999 + 1000));
+async function saveOtpToFirestore(phone: string, code: number) {
+  const userRef = admin.database().ref('users/' + phone);
+  await userRef.update({ code: code, codeValid: true });
+}
 
-    twilio.messages.create({
-      body: `Your code is ${code}`,
-      to: phone,
-      from: '+358454909714'
-    }, (err) => {
-      if (err) {
-        response.status(422).send({ error: err });
-      } else {
-        admin.database().ref('users/' + phone)
-          .update({ code: code, codeValid: true }, () => {
-            response.send({ success: true });
-          });
-        }
-    });
-  })
-  .catch((err) => {
-    // TODO: Once confirmed working, change message to "User not found"
-    response.status(422).send({ error: err });
-  })
+export const requestOtp = onRequest(async (request, response) => {
+  try {
+    const phone = String(request.body.phone).replace(/[^\d]/g, "");
+    if (!phone) {
+      response.status(422).send({ error: 'Invalid phone number' });
+      return;
+    }
 
-})
+    const userRecord = await admin.auth().getUser(phone);
+    const code = generateOtp();
+
+    await sendOtpSms(phone, code);
+    await saveOtpToFirestore(phone, code);
+
+    response.send({ success: true });
+  } catch (err) {
+    console.error(err); // Log the error for debugging
+    response.status(422).send({ error: 'Unable to process request' });
+  }
+});
