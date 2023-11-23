@@ -35,8 +35,9 @@ async function sendOtpSms(phone: string, code: number) {
 
 // Function to save OTP to Firestore
 async function saveOtpToFirestore(phone: string, code: number) {
-  const userRef = admin.database().ref('users/' + phone);
-  await userRef.update({ code: code, codeValid: true });
+  const db = admin.firestore();
+  const userRef = db.collection('users').doc(phone); // Using phone number as document ID
+  await userRef.set({ code: code, codeValid: true }, { merge: true });
 }
 
 // Cloud Function to handle OTP requests
