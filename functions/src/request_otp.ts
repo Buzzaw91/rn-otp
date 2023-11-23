@@ -1,26 +1,31 @@
-import twilio from 'twilio';
-import * as admin from 'firebase-admin';
-import * as functions from 'firebase-functions';
 import { onRequest } from "firebase-functions/v2/https";
+import * as admin from 'firebase-admin';
+import twilio from 'twilio';
+import { defineString } from 'firebase-functions/params';
 
-// Directly get Twilio credentials from Firebase functions configuration
-const config = functions.config();
-const { account_sid: accountSid, auth_token: authToken } = config.twilio;
-if (!accountSid || !authToken) {
-  throw new Error('Twilio credentials are not properly set.');
+// Define Twilio configuration parameters (without immediately calling .value())
+const twilioAccountSid = defineString('TWILIO_ACCOUNT_SID');
+const twilioAuthToken = defineString('TWILIO_AUTH_TOKEN');
+
+function initializeTwilioClient() {
+  const accountSid = twilioAccountSid.value();
+  const authToken = twilioAuthToken.value();
+
+  if (!accountSid || !authToken) {
+    throw new Error('Twilio credentials are not properly set.');
+  }
+
+  return new twilio.Twilio(accountSid, authToken);
 }
-
-
- const twilioClient = new twilio.Twilio(accountSid, authToken);
-
-// Extracted as a utility function
+// Utility function to generate OTP
 function generateOtp() {
   return Math.floor(Math.random() * 8999 + 1000);
 }
 
+// Function to send OTP SMS
 async function sendOtpSms(phone: string, code: number) {
-  const fromNumber = '+358454909714';
-  // or from a config file
+  const twilioClient = initializeTwilioClient();
+  const fromNumber = '+358454909714'; // Replace with your number or fetch from config
   await twilioClient.messages.create({
     body: `Your code is ${code}`,
     to: phone,
@@ -28,11 +33,13 @@ async function sendOtpSms(phone: string, code: number) {
   });
 }
 
+// Function to save OTP to Firestore
 async function saveOtpToFirestore(phone: string, code: number) {
   const userRef = admin.database().ref('users/' + phone);
   await userRef.update({ code: code, codeValid: true });
 }
 
+// Cloud Function to handle OTP requests
 export const requestOtp = onRequest(async (request, response) => {
   try {
     const phone = String(request.body.phone).replace(/[^\d]/g, "");
@@ -41,9 +48,7 @@ export const requestOtp = onRequest(async (request, response) => {
       return;
     }
 
-    // const userRecord = await admin.auth().getUser(phone);
     const code = generateOtp();
-
     await sendOtpSms(phone, code);
     await saveOtpToFirestore(phone, code);
 
