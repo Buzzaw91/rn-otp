@@ -12,16 +12,22 @@ export const verifyOtp = onRequest(async (request, response) => {
 
   try {
     await admin.auth().getUser(phone);
-    const ref = admin.database().ref('users/' + phone);
-    const snapshot = await ref.once('value');
-    const user = snapshot.val();
+    const userRef = admin.firestore().collection('users').doc(phone);
+    const doc = await userRef.get();
+
+    if (!doc.exists) {
+      response.status(422).send({ error: 'User not found' });
+      return;
+    }
+
+    const user = doc.data()! // user is not undefined at point
 
     if (user.code !== code || !user.codeValid) {
       response.status(422).send({ error: 'Code not valid' });
       return;
     }
 
-    await ref.update({ codeValid: false });
+    await userRef.update({ codeValid: false });
     const token = await admin.auth().createCustomToken(phone);
     response.send({ token });
 
