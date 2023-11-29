@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Input, Button, } from '@rneui/base'
 import axios from 'axios'
-import { CREATE_USER, REQUEST_OTP } from '../utils/constants'
+import { CREATE_USER, REQUEST_OTP } from '../utils'
 
 export default function SignupForm() {
   const [phone, setPhone] = useState('')
