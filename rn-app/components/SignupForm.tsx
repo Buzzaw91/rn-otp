@@ -11,15 +11,6 @@ export default function SignupForm() {
     const phoneRegex = /^\+[1-9]{1}[0-9]{3,14}$/
 
     return phoneRegex.test(phoneNumber)
-  };
-
-
-  const handleSubmit = async () => {
-    if (!isValidPhoneNumber(phone)) {
-      console.log('Invalid phone number')
-      return; // Exit if the phone number is not valid
-    }
-    await createUserAndRequestOtp(phone); // Submit the phone number if it's valid
   }
 
   const createUserAndRequestOtp = async (phoneNumber: string) => {
@@ -30,6 +21,15 @@ export default function SignupForm() {
       console.error('Error in submitting phone number:', err)
     }
   }
+
+  const handleSubmit = async () => {
+    if (!isValidPhoneNumber(phone)) {
+      console.log('Invalid phone number')
+      return; // Exit if the phone number is not valid
+    }
+    await createUserAndRequestOtp(phone); // Submit the phone number if it's valid
+  }
+
 
 
   return (
